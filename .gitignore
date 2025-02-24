@@ -1,0 +1,14 @@
+# Ignora o arquivo do banco de dados SQLite
+clientes.db
+
+# Ignora pastas e arquivos temporários
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Ignora arquivos de ambiente (se houver)
+.env
+venv/
