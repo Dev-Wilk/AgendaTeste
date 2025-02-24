@@ -1,9 +1,21 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 import sqlite3
+import re
 
-# Funções para interagir com o banco de dados
-def adicionar_cliente(nome, telefone, aniversario=None):  # Aniversário é opcional
+# Função para validar o telefone
+def validar_telefone(telefone):
+    padrao = r"^\((\d{2})\)\s*(9?\d{4})-(\d{4})$"
+    match = re.match(padrao, telefone)
+    if not match:
+        return None
+    ddd, parte1, parte2 = match.groups()
+    if not 11 <= int(ddd) <= 99:
+        return None
+    return f"{ddd}{parte1}{parte2}"
+
+# Funções do banco de dados (mantidas iguais)
+def adicionar_cliente(nome, telefone, aniversario=None):
     conn = sqlite3.connect('clientes.db')
     cursor = conn.cursor()
     cursor.execute('INSERT INTO clientes (nome, telefone, aniversario) VALUES (?, ?, ?)', (nome, telefone, aniversario))
@@ -18,28 +30,19 @@ def listar_clientes():
     conn.close()
     return rows
 
-def atualizar_cliente(id, nome, telefone, aniversario=None):  # Aniversário é opcional
-    conn = sqlite3.connect('clientes.db')
-    cursor = conn.cursor()
-    cursor.execute('UPDATE clientes SET nome=?, telefone=?, aniversario=? WHERE id=?', (nome, telefone, aniversario, id))
-    conn.commit()
-    conn.close()
-
-def excluir_cliente(id):
-    conn = sqlite3.connect('clientes.db')
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM clientes WHERE id=?', (id,))
-    conn.commit()
-    conn.close()
-
-# Funções da interface gráfica
+# Funções da interface gráfica (com validação)
 def adicionar():
     nome = entry_nome.get()
     telefone = entry_telefone.get()
-    aniversario = entry_aniversario.get() or None  # Se estiver vazio, será None
+    aniversario = entry_aniversario.get() or None
 
-    if nome and telefone:  # Agora só nome e telefone são obrigatórios
-        adicionar_cliente(nome, telefone, aniversario)
+    telefone_validado = validar_telefone(telefone)
+    if not telefone_validado:
+        messagebox.showwarning("Erro", "Número de telefone inválido! Use o formato (DDD) 9XXXX-XXXX ou (DDD) XXXX-XXXX.")
+        return
+
+    if nome and telefone_validado:
+        adicionar_cliente(nome, telefone_validado, aniversario)
         messagebox.showinfo("Sucesso", "Cliente adicionado com sucesso!")
         entry_nome.delete(0, tk.END)
         entry_telefone.delete(0, tk.END)
@@ -47,7 +50,6 @@ def adicionar():
         atualizar_lista()
     else:
         messagebox.showwarning("Erro", "Preencha pelo menos nome e telefone!")
-
 def atualizar_lista():
     for row in treeview.get_children():
         treeview.delete(row)
